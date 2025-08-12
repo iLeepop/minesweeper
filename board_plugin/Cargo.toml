@@ -1,0 +1,18 @@
+[package]
+name = "board_plugin"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = []
+debug = ["colored", "bevy-inspector-egui"]
+
+[dependencies]
+bevy = "0.16.1"
+
+rand = "0.9.2"
+
+serde = "1.0.219"
+
+bevy-inspector-egui = { version = "0.32.0", optional = true }
+colored = { version = "3.0.0", optional = true }
