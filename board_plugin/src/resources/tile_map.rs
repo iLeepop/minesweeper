@@ -1,5 +1,13 @@
 use crate::resources::tile::Tile;
 use std::ops::{Deref, DerefMut};
+use rand::{rng, Rng};
+use crate::components::Coordinates;
+
+const SQUARE_COORDINATES: [(i8, i8); 8] = [
+    (-1, -1), (-1, 0), (-1, 1),
+    (0, -1),          (0, 1),
+    (1, -1), (1, 0), (1, 1),
+];
 
 /// Base tile map
 #[derive(Debug, Clone)]
@@ -56,6 +64,60 @@ impl TileMap {
     // Getter for `bomb_count`
     pub fn bomb_count(&self) -> u16 {
         self.bomb_count
+    }
+    pub fn safe_square_at(&self, coordinates: Coordinates) -> impl Iterator<Item = Coordinates> {
+        SQUARE_COORDINATES
+            .iter()
+            .copied()
+            .map(move |tuple| coordinates + tuple)
+    }
+
+    pub fn is_bomb_at(&self, coordinates: Coordinates) -> bool {
+        if coordinates.x >= self.width || coordinates.y >= self.height {
+            return false;
+        };
+        self.map[coordinates.y as usize][coordinates.x as usize].is_bomb()
+    }
+
+    pub fn bomb_count_at(&self, coordinates: Coordinates) -> u8 {
+        if self.is_bomb_at(coordinates) {
+            return 0
+        }
+        let res = self
+                        .safe_square_at(coordinates)
+                        .filter(|coord| self.is_bomb_at(*coord))
+                        .count();
+        res as u8
+    }
+
+    pub fn set_bombs(&mut self, bomb_count: u16) {
+        self.bomb_count = bomb_count;
+        let mut remaining_bombs = bomb_count;
+        let mut rng = rng();
+        while remaining_bombs > 0 {
+            let (x, y) = (
+                rng.random_range(0..self.width) as usize,
+                rng.random_range(0..self.height) as usize,
+            );
+            if let Tile::Empty = self[y][x] {
+                self[y][x] = Tile::Bomb;
+                remaining_bombs -= 1;
+            }
+        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let coords = Coordinates { x, y };
+                if self.is_bomb_at(coords) {
+                    continue;
+                }
+                let num = self.bomb_count_at(coords);
+                if num == 0 {
+                    continue;
+                }
+                let tile = &mut self[y as usize][x as usize];
+                *tile = Tile::BombNeighbor(num);
+            }
+        }
     }
 }
 

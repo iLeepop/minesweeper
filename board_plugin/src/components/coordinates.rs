@@ -10,7 +10,7 @@ use bevy_inspector_egui::InspectorOptions;
 
 #[cfg_attr(feature = "debug", derive(Reflect, InspectorOptions))]
 #[cfg_attr(feature = "debug", reflect(InspectorOptions))]
-#[derive(Debug, Default, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
+#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
 pub struct Coordinates {
     pub x: u16,
     pub y: u16,
@@ -24,6 +24,16 @@ impl Add for Coordinates {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
+    }
+}
+
+impl Add<(i8, i8)> for Coordinates {
+    type Output = Self;
+
+    fn add(self, (x, y): (i8, i8)) -> Self::Output {
+        let x = ((self.x as i16) + x as i16) as u16;
+        let y = ((self.y as i16) + y as i16) as u16;
+        Self { x, y }
     }
 }
 
